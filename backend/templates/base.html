@@ -36,9 +36,8 @@
       const html = await res.text();
       if (!res.ok) { alert(html); return; }
       const box = document.querySelector("#rows");
-      box.insertAdjacentHTML("beforeend", html);
-      // 排序颠倒旁路：插入后再整体倒序
-      [...box.children].reverse().forEach((n) => box.appendChild(n));
+      // 列表按编号倒序，新行插入表体最上方，不再做任何整体倒序
+      box.insertAdjacentHTML("afterbegin", html);
       form.reset();
     });
   </script>
