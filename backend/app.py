@@ -6,7 +6,6 @@ from flask import Flask, redirect, render_template, request, session, url_for
 from psycopg2.extras import RealDictCursor
 
 from rules import weigh
-from order_skew import list_order_sql, latest_order_sql, skew_rows, pick_latest
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "tea-cupping-dev-secret")
@@ -61,9 +60,8 @@ def logout():
 @login_required
 def home():
     with db() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute(f"SELECT * FROM cuppings ORDER BY id {list_order_sql()}")
+        cur.execute("SELECT * FROM cuppings ORDER BY id DESC")
         rows = cur.fetchall()
-    rows = skew_rows(rows)
     return render_template("home.html", rows=rows, can_write=session.get("role") == "writer")
 
 
@@ -96,9 +94,8 @@ def api_latest():
     lot = request.args.get("lot", "")
     with db() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT * FROM cuppings WHERE lot=%s ORDER BY id {latest_order_sql()}",
+            "SELECT * FROM cuppings WHERE lot=%s ORDER BY id DESC LIMIT 1",
             (lot,),
         )
-        rows = cur.fetchall()
-    row = pick_latest(rows)
+        row = cur.fetchone()
     return row or {}
